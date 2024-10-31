@@ -47,29 +47,40 @@ for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# React to user input
-if prompt := st.chat_input("What is your message?"):
-    # Add user message to chat history
-    st.session_state.messages.append({"role": "user", "content": prompt})
-    # Display user message in chat message container
-    with st.chat_message("user"):
-        st.markdown(prompt)
-    
-    # Display assistant response in chat message container
-    with st.chat_message("assistant"):
-        message_placeholder = st.empty()
-        full_response = {"content": ""}
-        
-        # Generate response with asyncio and streamlit
-        async def generate_response():
-            response = await chat.chat_async(prompt, should_print=False)
-            full_response["content"] = response
-            message_placeholder.markdown(full_response["content"])
-        
-        asyncio.run(generate_response())
-    
-    # Add assistant response to chat history
-    st.session_state.messages.append({"role": "assistant", "content": full_response["content"]})
+# Create a container for the input area at the bottom
+input_container = st.container()
+
+# Create a form for the chat input
+with input_container:
+    with st.form(key="chat_form", clear_on_submit=True):
+        prompt = st.text_area("Type your message:", key="chat_input", height=150)
+        submit_button = st.form_submit_button("Send")
+
+        if submit_button and prompt:
+            # Add user message to chat history
+            st.session_state.messages.append({"role": "user", "content": prompt})
+            # Display user message in chat message container
+            with st.chat_message("user"):
+                st.markdown(prompt)
+            
+            # Display assistant response in chat message container
+            with st.chat_message("assistant"):
+                message_placeholder = st.empty()
+                full_response = {"content": ""}
+                
+                # Generate response with asyncio and streamlit
+                async def generate_response():
+                    response = await chat.chat_async(prompt, should_print=False)
+                    full_response["content"] = response
+                    message_placeholder.markdown(full_response["content"])
+                
+                asyncio.run(generate_response())
+            
+            # Add assistant response to chat history
+            st.session_state.messages.append({"role": "assistant", "content": full_response["content"]})
+            
+            # Rerun to clear the input
+            st.rerun()
 
 # Display the currently selected model
 st.sidebar.write(f"Current model: {selected_model}")
