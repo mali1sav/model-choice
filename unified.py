@@ -1,7 +1,6 @@
 import os
 import json
-from openai import OpenAI
-from openai import AsyncOpenAI
+import openai
 from termcolor import colored
 import time
 import asyncio
@@ -51,17 +50,7 @@ class UnifiedApis:
     def _initialize_client(self):
         if not self.api_key:
             raise ValueError("API key for OpenRouter is not set in the .env file")
-
-        if self.use_async:
-            self.client = AsyncOpenAI(
-                base_url="https://openrouter.ai/api/v1",
-                api_key=self.api_key
-            )
-        else:
-            self.client = OpenAI(
-                base_url="https://openrouter.ai/api/v1",
-                api_key=self.api_key
-            )
+        # No need to initialize a separate client; openai library handles it.
 
     def set_system_message(self, message=None):
         self.system_message = message or "You are a helpful assistant."
@@ -118,7 +107,7 @@ class UnifiedApis:
         retries = 0
         while retries < self.max_retry:
             try:
-                response = self.client.chat.completions.create(
+                response = openai.ChatCompletion.create(
                     model=self.model,
                     messages=[{"role": "system", "content": self.system_message}] + self.history,
                     stream=self.stream,
@@ -129,8 +118,8 @@ class UnifiedApis:
                 if self.stream:
                     assistant_response = ""
                     for chunk in response:
-                        if chunk.choices[0].delta.content:
-                            content = chunk.choices[0].delta.content
+                        if 'choices' in chunk and 'delta' in chunk['choices'][0] and 'content' in chunk['choices'][0]['delta']:
+                            content = chunk['choices'][0]['delta']['content']
                             if should_print:
                                 print(colored(content, color), end="", flush=True)
                             assistant_response += content
@@ -162,7 +151,7 @@ class UnifiedApis:
         retries = 0
         while retries < self.max_retry:
             try:
-                response = await self.client.chat.completions.create(
+                response = await openai.ChatCompletion.acreate(
                     model=self.model,
                     messages=[{"role": "system", "content": self.system_message}] + self.history,
                     stream=self.stream,
@@ -173,11 +162,12 @@ class UnifiedApis:
                 if self.stream:
                     assistant_response = ""
                     async for chunk in response:
-                        content = chunk.choices[0].delta.content
-                        if content:
-                            if should_print:
-                                print(colored(content, color), end="", flush=True)
-                            assistant_response += content
+                        if 'choices' in chunk and 'delta' in chunk['choices'][0] and 'content' in chunk['choices'][0]['delta']:
+                            content = chunk['choices'][0]['delta']['content']
+                            if content:
+                                if should_print:
+                                    print(colored(content, color), end="", flush=True)
+                                assistant_response += content
                     print()
                 else:
                     assistant_response = response.choices[0].message.content
@@ -196,12 +186,4 @@ class UnifiedApis:
                 retries += 1
                 await asyncio.sleep(1)
         raise Exception("Max retries reached")
-    
-"""
-instructions for the AI using unified to build apps:
-when using async methods set use_async=True
-when using json mode set json_mode=True and describe the json object needed to the model in system message
-Always use default models unless otherwise specified
-Ensure that the necessary API key (OPENROUTER_API_KEY) is set in the .env file
-Available models can be found at https://openrouter.ai/docs#models
-"""
+        

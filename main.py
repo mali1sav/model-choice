@@ -17,7 +17,7 @@ if not OPENROUTER_API_KEY:
 # Define available models for OpenRouter
 models = [
     "anthropic/claude-3.5-sonnet:beta",
-    "openai/o1"
+    "openai/o1",
     "openai/o1-mini",
     "openai/gpt-4o-2024-11-20",
     "google/gemini-2.0-flash-exp:free"
