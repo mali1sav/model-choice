@@ -6,7 +6,6 @@ A modern Streamlit-based chat application with advanced UI and multiple LLM mode
 - Modern UI with dark mode and responsive design
 - Horizontal radio button model selection
 - Clean table view of model capabilities
-- Asynchronous API calls with retry logic
 - Chat history management
 - Environment variable configuration
 - Browser-native scrolling
